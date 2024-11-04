@@ -21,6 +21,21 @@ CREATE TYPE PollTypes AS ENUM ('OpenAnswer', 'MultipleChoice', 'Checkboxes', 'Li
 
 -------------------------------------------- Tables --------------------------------------------
 
+CREATE TABLE _Location(
+    id SERIAL PRIMARY KEY,
+    city text DEFAULT "Porto" NOT NULL,
+    street text NOT NULL,
+    _number integer,
+    zip_code text,
+    coordinates point
+);
+
+CREATE TABLE InstitutionCourse(
+    id SERIAL PRIMARY KEY,
+    institution text NOT NULL,
+    course text
+);
+
 CREATE TABLE _User(
     id SERIAL PRIMARY KEY,
     _name text NOT NULL,
@@ -42,7 +57,6 @@ CREATE TABLE _User(
     id_institutioncourse INTEGER REFERENCES InstitutionCourse(id) 
 );
 
--- É preciso ver como fazer a cena das categorias
 CREATE TABLE _Event(
     id SERIAL PRIMARY KEY,
     title text NOT NULL,
@@ -98,21 +112,6 @@ CREATE TABLE Feedback(
     feedback_text text NOT NULL,
     rating number NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL
-);
-
-CREATE TABLE _Location(
-    id SERIAL PRIMARY KEY,
-    city text DEFAULT "Porto" NOT NULL,
-    street text NOT NULL,
-    _number integer,
-    zip_code text,
-    coordinates point
-);
-
-CREATE TABLE InstitutionCourse(
-    id SERIAL PRIMARY KEY,
-    institution text NOT NULL,
-    course text
 );
 
 CREATE TABLE Poll(
