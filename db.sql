@@ -86,7 +86,7 @@ CREATE TABLE Notification(
     id uid PRIMARY KEY,
     notification_content text NOT NULL,
     is_read boolean DEFAULT false NOT NULL,
-    inviter,
+    inviter text,
     date_sent date DEFAULT CURRENT_DATE NOT NULL,
     id_user INTEGER NOT NULL REFERENCES _User(id),
     id_event INTEGER REFERENCES _Event(id)
