@@ -1,18 +1,23 @@
-DROP TABLE IF EXISTS _User CASCADE;
-DROP TABLE IF EXISTS _Event CASCADE;
-DROP TABLE IF EXISTS Event_Attendance CASCADE;
+DROP TABLE IF EXISTS Upvoted CASCADE;
+DROP TABLE IF EXISTS Photo CASCADE;
+DROP TABLE IF EXISTS File_Upload CASCADE;
+DROP TABLE IF EXISTS _Comment CASCADE;
+DROP TABLE IF EXISTS Poll_Option CASCADE;
+DROP TABLE IF EXISTS Poll_Answer CASCADE;
+DROP TABLE IF EXISTS Poll CASCADE;
+DROP TABLE IF EXISTS Unblock_Appeal CASCADE;
+DROP TABLE IF EXISTS Feedback CASCADE;
 DROP TABLE IF EXISTS Report CASCADE;
 DROP TABLE IF EXISTS Notification CASCADE;
-DROP TABLE IF EXISTS Feedback CASCADE;
+DROP TABLE IF EXISTS Event_Attendance CASCADE;
+DROP TABLE IF EXISTS _Event CASCADE;
 DROP TABLE IF EXISTS _Location CASCADE;
+DROP TABLE IF EXISTS _User CASCADE;
 DROP TABLE IF EXISTS InstitutionCourse CASCADE;
-DROP TABLE IF EXISTS Poll CASCADE;
-DROP TABLE IF EXISTS Poll_Answer CASCADE;
-DROP TABLE IF EXISTS _Comment CASCADE;
-DROP TABLE IF EXISTS Photo_Upload CASCADE;
-DROP TABLE IF EXISTS upvoted CASCADE;
 
-DROP TYPE IF EXISTS EventCategories;
+-- Drop types
+DROP TYPE IF EXISTS EventCategories CASCADE;
+DROP TYPE IF EXISTS PollTypes CASCADE;
 
 -- -------------------------------------------- Types --------------------------------------------
 
@@ -23,7 +28,7 @@ CREATE TYPE PollTypes AS ENUM ('OpenAnswer', 'MultipleChoice', 'Checkboxes', 'Li
 
 CREATE TABLE _Location(
     id SERIAL PRIMARY KEY,
-    city text DEFAULT "Porto" NOT NULL,
+    city text DEFAULT 'Porto' NOT NULL,
     street text NOT NULL,
     _number integer,
     zip_code text,
@@ -39,8 +44,8 @@ CREATE TABLE InstitutionCourse(
 CREATE TABLE _User(
     id SERIAL PRIMARY KEY,
     _name text NOT NULL,
-    email text NOT NULL CONSTRAINT user_email_uK UNIQUE,
-    username text NOT NULL CONSTRAINT user_username_uK UNIQUE,
+    email text NOT NULL CONSTRAINT user_email_uk UNIQUE,
+    username text NOT NULL CONSTRAINT user_username_uk UNIQUE,
     photo text,
     _password text NOT NULL,
     phone_number text,
@@ -67,8 +72,8 @@ CREATE TABLE _Event(
     is_hidden boolean DEFAULT false NOT NULL,
     limit_registration_date date,
     event_date date NOT NULL,
-    duration number NOT NULL,
-    max_capacity number,
+    duration integer NOT NULL,
+    max_capacity integer,
     is_approved boolean DEFAULT false NOT NULL,
     type EventCategories,
     CONSTRAINT limit_registration_date CHECK (limit_registration_date IS NULL OR limit_registration_date >= CURRENT_DATE),
@@ -107,10 +112,11 @@ CREATE TABLE Notification(
 );
 
 CREATE TABLE Feedback(
+    id SERIAL PRIMARY KEY,
     id_user INTEGER NOT NULL REFERENCES _User(id),
     id_event INTEGER NOT NULL REFERENCES _Event(id),
     feedback_text text NOT NULL,
-    rating number NOT NULL,
+    rating numeric NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL
 );
 
@@ -118,8 +124,8 @@ CREATE TABLE Poll(
     id SERIAL PRIMARY KEY,
     question text NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL,
-    lower_limit number,
-    upper_limit number,
+    lower_limit integer,
+    upper_limit integer,
     type PollTypes,
     CONSTRAINT upper_limit CHECK (upper_limit > lower_limit),
     id_event INTEGER NOT NULL REFERENCES _Event(id)
@@ -181,21 +187,24 @@ CREATE TABLE Unblock_Appeal(
 
 -------------------------------------------- Indexes --------------------------------------------
 
-CREATE INDEX IDX10 ON event USING btree (event_date);
-CREATE INDEX IDX11 ON event USING btree (type);
-CREATE INDEX IDX12 ON upvote USING btree (id_comment, id_user);
+CREATE INDEX event_date_idx ON _Event USING btree (event_date);
+CREATE INDEX event_type_idx ON _Event USING btree (type);
+CREATE INDEX upvoted_idx ON Upvoted USING btree (comment_id, user_id);
 
 -------------------------------------------- FTS Indexes --------------------------------------------
 
-CREATE INDEX IDX21 ON Event USING GIN (to_tsvector('english', setweight(coalesce(title,''), 'A')));
+CREATE INDEX event_title_fts_idx ON _Event 
+USING GIN (to_tsvector('english', setweight(coalesce(title,''), 'A')));
 
-CREATE INDEX IDX22 ON event USING GIN (to_tsvector('portuguese',
+CREATE INDEX event_content_fts_idx ON _Event 
+USING GIN (to_tsvector('portuguese',
     setweight(coalesce(title,''), 'A') || ' ' ||    
-    setweight(coalesce(description,''), 'B')));
+    setweight(coalesce(_description,''), 'B')));
      
-CLUSTER event USING IDX22;
+CLUSTER _Event USING event_content_fts_idx;
 
-CREATE INDEX IDX23 ON "user" USING GIN (to_tsvector('portuguese', setweight(coalesce(name,''), 'A')));
+CREATE INDEX user_name_fts_idx ON _User 
+USING GIN (to_tsvector('portuguese', setweight(coalesce(_name,''), 'A')));
 
 -------------------------------------------- Triggers --------------------------------------------
 
@@ -226,7 +235,6 @@ RETURNS TRIGGER AS $$
 DECLARE
     current_attendees INTEGER;
 BEGIN
-    -- Verifica se o utilizador já está registado
     IF EXISTS (
         SELECT 1 FROM Event_Attendance 
         WHERE id_user = NEW.id_user 
@@ -235,12 +243,11 @@ BEGIN
         RAISE EXCEPTION 'Utilizador já está registado neste evento';
     END IF;
 
-    -- Verifica a capacidade do evento
     SELECT COUNT(*) INTO current_attendees
     FROM Event_Attendance
     WHERE id_event = NEW.id_event;
 
-    IF (SELECT max_capacity FROM Event WHERE id = NEW.id_event) <= current_attendees THEN
+    IF (SELECT max_capacity FROM _Event WHERE id = NEW.id_event) <= current_attendees THEN
         RAISE EXCEPTION 'Evento já atingiu a capacidade máxima';
     END IF;
 
@@ -297,7 +304,6 @@ BEFORE INSERT ON Photo_Upload
 FOR EACH ROW
 EXECUTE FUNCTION set_current_date();
 
--- Podemos adicionar facilmente para outras tabelas que também precisem
 CREATE TRIGGER auto_set_date
 BEFORE INSERT ON Poll
 FOR EACH ROW
@@ -315,6 +321,16 @@ EXECUTE FUNCTION set_current_date();
 
 CREATE TRIGGER auto_set_date
 BEFORE INSERT ON Feedback
+FOR EACH ROW
+EXECUTE FUNCTION set_current_date();
+
+CREATE TRIGGER auto_set_date
+BEFORE INSERT ON _Comment
+FOR EACH ROW
+EXECUTE FUNCTION set_current_date();
+
+CREATE TRIGGER auto_set_date
+BEFORE INSERT ON File_Upload
 FOR EACH ROW
 EXECUTE FUNCTION set_current_date();
 
@@ -374,7 +390,7 @@ BEGIN TRANSACTION;
 
 SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 
-INSERT INTO event (title, description, is_online, link, limit_registration_date, 
+INSERT INTO _Event (title, _description, is_online, link, limit_registration_date, 
                   event_date, duration, max_capacity, type)
 VALUES ($title, $description, $is_online, $link, $limit_registration_date,
         $event_date, $duration, $max_capacity, $type)
@@ -416,15 +432,15 @@ BEGIN TRANSACTION;
 
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
-DELETE FROM upvote WHERE id_user = $user_id;
-DELETE FROM comment WHERE id_user = $user_id;
-DELETE FROM poll_answer WHERE id_user = $user_id;
-DELETE FROM event_attendance WHERE id_user = $user_id;
-DELETE FROM feedback WHERE id_user = $user_id;
-DELETE FROM report WHERE id_user = $user_id;
-DELETE FROM file_upload WHERE id_user = $user_id;
-DELETE FROM notification WHERE id_user = $user_id;
-DELETE FROM unblock_appeal WHERE id_user = $user_id;
-DELETE FROM "user" WHERE id = $user_id;
+DELETE FROM Upvoted WHERE user_id = $user_id;
+DELETE FROM _Comment WHERE id_user = $user_id;
+DELETE FROM Poll_Answer WHERE id_user = $user_id;
+DELETE FROM Event_Attendance WHERE id_user = $user_id;
+DELETE FROM Feedback WHERE id_user = $user_id;
+DELETE FROM Report WHERE id_user = $user_id;
+DELETE FROM File_Upload WHERE id_user = $user_id;
+DELETE FROM Notification WHERE id_user = $user_id;
+DELETE FROM Unblock_Appeal WHERE id_user = $user_id;
+DELETE FROM _User WHERE id = $user_id;
 
 COMMIT;
