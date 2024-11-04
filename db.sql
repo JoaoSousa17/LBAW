@@ -40,7 +40,7 @@ CREATE TABLE _User(
     is_admin boolean DEFAULT false NOT NULL,
     creation_date date DEFAULT CURRENT_DATE NOT NULL ,
     id_institutioncourse INTEGER REFERENCES InstitutionCourse(id) 
-)
+);
 
 -- É preciso ver como fazer a cena das categorias
 CREATE TABLE _Event(
@@ -62,7 +62,7 @@ CREATE TABLE _Event(
     CONSTRAINT duration CHECK (duration > 0),
     CONSTRAINT max_capacity CHECK (max_capacity > 0),
     id_location INTEGER REFERENCES _Location(id)
-)
+);
 
 CREATE TABLE Event_Attendance(
     id_user INTEGER NOT NULL REFERENCES _User(id),
@@ -71,7 +71,7 @@ CREATE TABLE Event_Attendance(
     is_favorite boolean DEFAULT false NOT NULL,
     is_organizer boolean DEFAULT false NOT NULL,
     PRIMARY KEY (id_user, id_event)
-)
+);
 
 CREATE TABLE Report(
     id_user INTEGER NOT NULL REFERENCES _User(id),
@@ -80,7 +80,7 @@ CREATE TABLE Report(
     is_solved boolean DEFAULT false NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL,
     PRIMARY KEY (id_user, id_event)
-)
+);
 
 CREATE TABLE Notification(
     id uid PRIMARY KEY,
@@ -90,7 +90,7 @@ CREATE TABLE Notification(
     date_sent date DEFAULT CURRENT_DATE NOT NULL,
     id_user INTEGER NOT NULL REFERENCES _User(id),
     id_event INTEGER REFERENCES _Event(id)
-)
+);
 
 CREATE TABLE Feedback(
     id_user INTEGER NOT NULL REFERENCES _User(id),
@@ -98,7 +98,7 @@ CREATE TABLE Feedback(
     feedback_text text NOT NULL,
     rating number NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL
-)
+);
 
 CREATE TABLE _Location(
     id uid PRIMARY KEY,
@@ -107,13 +107,13 @@ CREATE TABLE _Location(
     _number integer,
     zip_code text,
     coordinates point
-)
+);
 
 CREATE TABLE InstitutionCourse(
     id uid PRIMARY KEY,
     institution text NOT NULL,
     course text
-)
+);
 
 CREATE TABLE Poll(
     id uid PRIMARY KEY,
@@ -124,7 +124,7 @@ CREATE TABLE Poll(
     type PollTypes,
     CONSTRAINT upper_limit CHECK (upper_limit > lower_limit),
     id_event INTEGER NOT NULL REFERENCES _Event(id)
-)
+);
 
 CREATE TABLE Poll_Answer(
     id uid PRIMARY KEY,
@@ -132,14 +132,14 @@ CREATE TABLE Poll_Answer(
     _date date DEFAULT CURRENT_DATE NOT NULL,
     id_poll INTEGER NOT NULL REFERENCES Poll(id),
     id_user INTEGER NOT NULL REFERENCES _User(id)
-)
+);
 
 CREATE TABLE Poll_Option(
     id uid PRIMARY KEY,
     letter text NOT NULL,
     _content text NOT NULL,
     id_poll INTEGER NOT NULL REFERENCES Poll(id)
-)
+);
 
 CREATE TABLE _Comment(
     id uid PRIMARY KEY,
@@ -148,7 +148,7 @@ CREATE TABLE _Comment(
     _date date DEFAULT CURRENT_DATE NOT NULL,
     id_user INTEGER NOT NULL REFERENCES _User(id),
     id_event INTEGER NOT NULL REFERENCES _Event(id)
-)
+);
 
 CREATE TABLE File_Upload(
     id uid PRIMARY KEY,
@@ -158,7 +158,7 @@ CREATE TABLE File_Upload(
     _date date DEFAULT CURRENT_DATE NOT NULL,
     id_user INTEGER NOT NULL REFERENCES _User(id),
     id_event INTEGER NOT NULL REFERENCES _Event(id)
-)
+);
 
 CREATE TABLE Upvoted(
     user_id INTEGER NOT NULL REFERENCES _User(id),
@@ -170,7 +170,7 @@ CREATE TABLE Photo(
     id uid PRIMARY KEY, 
     path text NOT NULL,
     id_event INTEGER NOT NULL REFERENCES _Event(id)
-)
+);
 
 CREATE TABLE Unblock_Appeal(
     id uid PRIMARY KEY,
@@ -178,7 +178,7 @@ CREATE TABLE Unblock_Appeal(
     _description text NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL,
     id_user INTEGER NOT NULL REFERENCES _User(id)
-)
+);
 
 -------------------------------------------- Indexes --------------------------------------------
 
