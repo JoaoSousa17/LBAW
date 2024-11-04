@@ -16,8 +16,8 @@ DROP TYPE IF EXISTS EventCategories;
 
 -- -------------------------------------------- Types --------------------------------------------
 
-CREATE TYPE EventCategories AS ENUM ("Sports", "Tech", "Science", "Art", "Entrepreneurship", "Health", "Environment", "Other")
-CREATE TYPE PollTypes AS ENUM ("OpenAnswer", "MultipleChoice", "Checkboxes", "LinearScale")
+CREATE TYPE EventCategories AS ENUM ('Sports', 'Tech', 'Science', 'Art', 'Entrepreneurship', 'Health', 'Environment', 'Other');
+CREATE TYPE PollTypes AS ENUM ('OpenAnswer', 'MultipleChoice', 'Checkboxes', 'LinearScale');
 
 -------------------------------------------- Tables --------------------------------------------
 
