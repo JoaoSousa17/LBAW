@@ -22,7 +22,7 @@ CREATE TYPE PollTypes AS ENUM ('OpenAnswer', 'MultipleChoice', 'Checkboxes', 'Li
 -------------------------------------------- Tables --------------------------------------------
 
 CREATE TABLE _User(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     _name text NOT NULL,
     email text NOT NULL CONSTRAINT user_email_uK UNIQUE,
     username text NOT NULL CONSTRAINT user_username_uK UNIQUE,
@@ -44,7 +44,7 @@ CREATE TABLE _User(
 
 -- É preciso ver como fazer a cena das categorias
 CREATE TABLE _Event(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     title text NOT NULL,
     _description text NOT NULL,
     photo text,
@@ -83,7 +83,7 @@ CREATE TABLE Report(
 );
 
 CREATE TABLE Notification(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     notification_content text NOT NULL,
     is_read boolean DEFAULT false NOT NULL,
     inviter text,
@@ -101,7 +101,7 @@ CREATE TABLE Feedback(
 );
 
 CREATE TABLE _Location(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     city text DEFAULT "Porto" NOT NULL,
     street text NOT NULL,
     _number integer,
@@ -110,13 +110,13 @@ CREATE TABLE _Location(
 );
 
 CREATE TABLE InstitutionCourse(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     institution text NOT NULL,
     course text
 );
 
 CREATE TABLE Poll(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     question text NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL,
     lower_limit number,
@@ -127,7 +127,7 @@ CREATE TABLE Poll(
 );
 
 CREATE TABLE Poll_Answer(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     answer text NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL,
     id_poll INTEGER NOT NULL REFERENCES Poll(id),
@@ -135,14 +135,14 @@ CREATE TABLE Poll_Answer(
 );
 
 CREATE TABLE Poll_Option(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     letter text NOT NULL,
     _content text NOT NULL,
     id_poll INTEGER NOT NULL REFERENCES Poll(id)
 );
 
 CREATE TABLE _Comment(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     title text NOT NULL,
     _content text NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE _Comment(
 );
 
 CREATE TABLE File_Upload(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     title text NOT NULL,
     _path text NOT NULL,
     _description text NOT NULL,
@@ -167,13 +167,13 @@ CREATE TABLE Upvoted(
 );
 
 CREATE TABLE Photo(
-    id uid PRIMARY KEY, 
+    id SERIAL PRIMARY KEY, 
     path text NOT NULL,
     id_event INTEGER NOT NULL REFERENCES _Event(id)
 );
 
 CREATE TABLE Unblock_Appeal(
-    id uid PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     title text NOT NULL,
     _description text NOT NULL,
     _date date DEFAULT CURRENT_DATE NOT NULL,
@@ -188,10 +188,15 @@ CREATE INDEX IDX12 ON upvote USING btree (id_comment, id_user);
 
 -------------------------------------------- FTS Indexes --------------------------------------------
 
-CREATE INDEX IDX21 ON _Event USING GIN (to_tsvector('english', title));
-CREATE INDEX IDX22 ON event USING GIN (to_tsvector('portuguese', coalesce(title,'') || ' ' || coalesce(description,''))); 
+CREATE INDEX IDX21 ON Event USING GIN (to_tsvector('english', setweight(coalesce(title,''), 'A')));
+
+CREATE INDEX IDX22 ON event USING GIN (to_tsvector('portuguese',
+    setweight(coalesce(title,''), 'A') || ' ' ||    
+    setweight(coalesce(description,''), 'B')));
+     
 CLUSTER event USING IDX22;
-CREATE INDEX IDX25 ON "user" USING GIN (to_tsvector('portuguese', coalesce(name,'')));
+
+CREATE INDEX IDX23 ON "user" USING GIN (to_tsvector('portuguese', setweight(coalesce(name,''), 'A')));
 
 -------------------------------------------- Triggers --------------------------------------------
 
