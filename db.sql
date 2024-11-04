@@ -392,11 +392,11 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 
 INSERT INTO _Event (title, _description, is_online, link, limit_registration_date, 
                   event_date, duration, max_capacity, type)
-VALUES ($title, $description, $is_online, $link, $limit_registration_date,
+VALUES ($title, $_description, $is_online, $link, $limit_registration_date,
         $event_date, $duration, $max_capacity, $type)
 RETURNING id INTO event_id;
 
-INSERT INTO event_attendance (id_user, id_event, is_organizer)
+INSERT INTO Event_Attendance (id_user, id_event, is_organizer)
 VALUES ($user_id, event_id, TRUE);
 
 COMMIT;
@@ -407,16 +407,16 @@ BEGIN TRANSACTION;
 
 SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 
-INSERT INTO feedback (id_user, id_event, feedback_text, rating, date)
+INSERT INTO Feedback (id_user, id_event, feedback_text, rating, _date)
 VALUES ($user_id, $event_id, $feedback_text, $rating, CURRENT_DATE);
 
 WITH organizer AS (
     SELECT id_user 
-    FROM event_attendance 
+    FROM Event_Attendance 
     WHERE id_event = $event_id AND is_organizer = TRUE
 )
 
-INSERT INTO notification (notification_content, id_user, id_event, date_sent)
+INSERT INTO Notification (notification_content, id_user, id_event, date_sent)
 SELECT 
     'Novo feedback recebido para seu evento', 
     organizer.id_user, 
