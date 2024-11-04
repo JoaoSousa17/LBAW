@@ -293,17 +293,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Um único trigger reutilizado em várias tabelas
-CREATE TRIGGER auto_set_date
-BEFORE INSERT ON Comment
-FOR EACH ROW
-EXECUTE FUNCTION set_current_date();
-
-CREATE TRIGGER auto_set_date
-BEFORE INSERT ON Photo_Upload
-FOR EACH ROW
-EXECUTE FUNCTION set_current_date();
-
 CREATE TRIGGER auto_set_date
 BEFORE INSERT ON Poll
 FOR EACH ROW
