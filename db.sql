@@ -288,6 +288,27 @@ BEGIN
     IF NEW.rating < 1 OR NEW.rating > 5 THEN
         RAISE EXCEPTION 'O rating deve estar entre 1 e 5';
     END IF;
+
+    IF EXISTS (
+        SELECT 1 
+        FROM Feedback 
+        WHERE id_user = NEW.id_user 
+        AND id_event = NEW.id_event
+        AND id != NEW.id 
+    ) THEN
+        RAISE EXCEPTION 'Usuário já deu feedback para este evento';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM Event_Attendance 
+        WHERE id_user = NEW.id_user 
+        AND id_event = NEW.id_event
+        AND is_attended = true
+    ) THEN
+        RAISE EXCEPTION 'Apenas usuários que participaram do evento podem dar feedback';
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
