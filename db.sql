@@ -189,7 +189,8 @@ CREATE INDEX IDX12 ON upvote USING btree (id_comment, id_user);
 -------------------------------------------- FTS Indexes --------------------------------------------
 
 CREATE INDEX IDX21 ON _Event USING GIN (to_tsvector('english', title));
-CREATE INDEX IDX22 ON event USING GIN (to_tsvector('portuguese', coalesce(title,'') ' ' coalesce(description,''))); CLUSTER event USING IDX22;
+CREATE INDEX IDX22 ON event USING GIN (to_tsvector('portuguese', coalesce(title,'') || ' ' || coalesce(description,''))); 
+CLUSTER event USING IDX22;
 CREATE INDEX IDX25 ON "user" USING GIN (to_tsvector('portuguese', coalesce(name,'')));
 
 -------------------------------------------- Triggers --------------------------------------------
